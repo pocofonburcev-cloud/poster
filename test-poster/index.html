@@ -29,8 +29,7 @@
              vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
       
       <a-assets>
-        <!-- Убрали стандартный loop, так как теперь циклом управляет наш скрипт -->
-        <video id="ar-video" src="./video.mp4" preload="auto" crossorigin="anonymous" muted playsinline webkit-playsinline></video>
+        <video id="ar-video" src="./video_v2.mp4" preload="auto" crossorigin="anonymous" muted playsinline webkit-playsinline></video>
         <audio id="ar-music" src="./music.mp3" preload="auto" loop="true" crossorigin="anonymous"></audio>
       </a-assets>
 
@@ -53,7 +52,7 @@
       const targetEntity = document.querySelector('#poster-target');
       const overlay = document.querySelector('#example-scanning-overlay');
       let isTargetFound = false;
-      let direction = 1; // 1 — вперед, -1 — назад
+      let direction = 1; 
 
       window.addEventListener('click', () => {
         if (isTargetFound) {
@@ -76,33 +75,22 @@
         overlay.style.display = "block";
       });
 
-      // Логика бумеранга: запускается на каждом кадре обновления видео
       video.addEventListener('timeupdate', () => {
-        // Если идем назад
-        if (direction === -1) {
-          // Если дошли почти до самого начала (меньше 0.1 секунды)
-          if (video.currentTime <= 0.1) {
-            direction = 1; // Меняем направление вперед
-            video.play();  // Запускаем обычное воспроизведение
-          }
-        } 
-        // Если идем вперед
-        else if (direction === 1) {
-          // Если до конца видео осталось меньше 0.1 секунды
-          if (video.currentTime >= video.duration - 0.1) {
-            direction = -1; // Меняем направление назад
-            video.pause();  // Ставим на паузу стандартный плеер, чтобы крутить вручную
-          }
+        if (direction === -1 && video.currentTime <= 0.1) {
+          direction = 1;
+          video.play();
+        } else if (direction === 1 && video.currentTime >= video.duration - 0.1) {
+          direction = -1;
+          video.pause();
         }
       });
 
-      // Специальный постоянный цикл для плавной перемотки назад
+      // Перемотка назад (выполняется только когда видео загружено)
       setInterval(() => {
-        if (isTargetFound && direction === -1) {
-          // Отматываем назад мелкими шажками (примерно 30 кадров в секунду)
-          video.currentTime -= 0.033;
+        if (isTargetFound && direction === -1 && video.readyState >= 2) {
+          video.currentTime = Math.max(0, video.currentTime - 0.04);
         }
-      }, 33);
+      }, 40);
     </script>
   </body>
 </html>
