@@ -2,26 +2,27 @@
 <html>
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AR Постер 40x60</title>
+    <title>AR Постер 40x60 Стабильный</title>
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
     
     <style>
       body { margin: 0; overflow: hidden; }
-      /* Сделали подсказку аккуратной, без затемнения всего экрана */
+      /* Аккуратная подсказка сверху экрана без полного затемнения */
       #example-scanning-overlay {
         position: absolute; left: 0; right: 0; top: 20px;
         text-align: center; color: white;
         font-family: sans-serif; font-size: 16px; z-index: 100;
-        background: rgba(0, 0, 0, 0.5); /* Легкая плашка только под текстом */
-        padding: 10px; width: 80%; margin: 0 auto; border-radius: 8px;
+        background: rgba(0, 0, 0, 0.6);
+        padding: 12px; width: 85%; margin: 0 auto; border-radius: 8px;
         pointer-events: none;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
       }
     </style>
   </head>
   <body>
     <div id="example-scanning-overlay">
-      <div>Наведите на постер и нажмите на экран для звука</div>
+      <div>Наведите камеру на постер и нажмите на экран для звука</div>
     </div>
 
     <a-scene mindar-image="imageTargetSrc: ./targets.mind; autoStart: true; uiScanning: #example-scanning-overlay" 
@@ -35,7 +36,13 @@
 
       <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-      <a-entity id="poster-target" mindar-image-target="targetIndex: 0">
+      <a-entity id="poster-target" mindar-image-target="targetIndex: 0"
+                filterMinCF="0.0005" 
+                filterBeta="0.001" 
+                smoothCount="15" 
+                smoothTolerance="0.01" 
+                smoothThreshold="5">
+        
         <a-video src="#ar-video" width="1" height="1.5" position="0 0 0"></a-video>
       </a-entity>
     </a-scene>
@@ -47,6 +54,7 @@
       const overlay = document.querySelector('#example-scanning-overlay');
       let isTargetFound = false;
 
+      // Включение звука и видео по клику (необходимо для мобильных браузеров)
       window.addEventListener('click', () => {
         if (isTargetFound) {
           if (video.paused) video.play();
@@ -54,19 +62,22 @@
         }
       });
 
+      // Событие: Постер найден в камере
       targetEntity.addEventListener("targetFound", event => {
         isTargetFound = true;
         video.play();
-        music.play().catch(err => console.log("Ожидание клика"));
-        // Полностью скрываем надпись, когда постер найден
+        // Запускаем музыку (сработает сразу, если пользователь уже кликнул по экрану)
+        music.play().catch(err => console.log("Ожидание первого клика для звука"));
+        // Скрываем текстовую подсказку сверху
         overlay.style.display = "none";
       });
 
+      // Событие: Камеру увели от постера
       targetEntity.addEventListener("targetLost", event => {
         isTargetFound = false;
         video.pause();
         music.pause();
-        // Снова показываем подсказку, если камеру увели в сторону
+        // Возвращаем подсказку на экран
         overlay.style.display = "block";
       });
     </script>
