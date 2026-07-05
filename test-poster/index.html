@@ -75,20 +75,27 @@
         overlay.style.display = "block";
       });
 
+      // Ловим только КОНЕЦ видео (когда оно проигрывается вперед)
       video.addEventListener('timeupdate', () => {
-        if (direction === -1 && video.currentTime <= 0.1) {
-          direction = 1;
-          video.play();
-        } else if (direction === 1 && video.currentTime >= video.duration - 0.1) {
+        if (direction === 1 && video.currentTime >= video.duration - 0.1) {
           direction = -1;
-          video.pause();
+          video.pause(); // Ставим на паузу, чтобы перематывать назад в таймере
         }
       });
 
-      // Перемотка назад (выполняется только когда видео загружено)
+      // Таймер: отвечает за плавную перемотку назад И запуск нового круга вперед
       setInterval(() => {
-        if (isTargetFound && direction === -1 && video.readyState >= 2) {
-          video.currentTime = Math.max(0, video.currentTime - 0.04);
+        if (isTargetFound && direction === -1) {
+          if (video.readyState >= 2) {
+            // Мотаем назад мелкими шажками
+            video.currentTime = Math.max(0, video.currentTime - 0.04);
+            
+            // Если дошли до начала (меньше или равно 0.1 сек)
+            if (video.currentTime <= 0.1) {
+              direction = 1;  // Меняем направление на "вперед"
+              video.play();   // Запускаем воспроизведение заново!
+            }
+          }
         }
       }, 40);
     </script>
