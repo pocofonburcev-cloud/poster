@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AR Постер GIF Бумеранг</title>
+    <title>AR Постер 40x60 Бумеранг</title>
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
     
@@ -29,7 +29,7 @@
              vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
       
       <a-assets>
-        <img id="ar-gif" src="./ar_image.gif" crossorigin="anonymous">
+        <video id="ar-video" src="./video_v2.mp4" preload="auto" crossorigin="anonymous" muted playsinline webkit-playsinline></video>
         <audio id="ar-music" src="./music.mp3" preload="auto" loop="true" crossorigin="anonymous"></audio>
       </a-assets>
 
@@ -42,36 +42,55 @@
                 smoothTolerance="0.01" 
                 smoothThreshold="5">
         
-        <a-image src="#ar-gif" width="1" height="1.5" position="0 0 0"></a-image>
+        <a-video src="#ar-video" width="1" height="1.5" position="0 0 0"></a-video>
       </a-entity>
     </a-scene>
 
     <script>
+      const video = document.querySelector('#ar-video');
       const music = document.querySelector('#ar-music');
       const targetEntity = document.querySelector('#poster-target');
       const overlay = document.querySelector('#example-scanning-overlay');
       let isTargetFound = false;
+      let direction = 1; 
 
-      // Включение звука по клику
       window.addEventListener('click', () => {
-        if (isTargetFound && music.paused) {
-          music.play();
+        if (isTargetFound) {
+          if (video.paused && direction === 1) video.play();
+          if (music.paused) music.play();
         }
       });
 
-      // Постер найден
-      targetEntity.addEventListener("targetFound", () => {
+      targetEntity.addEventListener("targetFound", event => {
         isTargetFound = true;
-        music.play().catch(err => console.log("Ожидание клика для звука"));
+        if (direction === 1) video.play();
+        music.play().catch(err => console.log("Ожидание клика"));
         overlay.style.display = "none";
       });
 
-      // Постер потерян
-      targetEntity.addEventListener("targetLost", () => {
+      targetEntity.addEventListener("targetLost", event => {
         isTargetFound = false;
+        video.pause();
         music.pause();
         overlay.style.display = "block";
       });
+
+      video.addEventListener('timeupdate', () => {
+        if (direction === -1 && video.currentTime <= 0.1) {
+          direction = 1;
+          video.play();
+        } else if (direction === 1 && video.currentTime >= video.duration - 0.1) {
+          direction = -1;
+          video.pause();
+        }
+      });
+
+      // Перемотка назад (выполняется только когда видео загружено)
+      setInterval(() => {
+        if (isTargetFound && direction === -1 && video.readyState >= 2) {
+          video.currentTime = Math.max(0, video.currentTime - 0.04);
+        }
+      }, 40);
     </script>
   </body>
 </html>
